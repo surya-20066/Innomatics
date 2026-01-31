@@ -1,0 +1,23 @@
+import pandas as pd
+import sqlite3
+
+orders=pd.read_csv("orders.csv")
+print(orders.head())
+users=pd.read_json("users.json")
+print(users.head())
+conn=sqlite3.connect("restaurants.db")
+cur=conn.cursor()
+f=open("restaurants.sql","r",encoding="utf-8")
+sql=f.read()
+f.close()
+sql=sql.replace("CREATE TABLE restaurants","CREATE TABLE IF NOT EXISTS restaurants")
+cur.executescript(sql)
+conn.commit()
+restaurants=pd.read_sql_query("SELECT * FROM restaurants",conn)
+print(restaurants.head())
+temp=pd.merge(orders,users,on="user_id",how="left")
+final=pd.merge(temp,restaurants,on="restaurant_id",how="left")
+print(final.head())
+final.to_csv("final_dataset.csv",index=False)
+final.info()
+conn.close()
